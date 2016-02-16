@@ -1,15 +1,10 @@
 #include <iostream>
 #include <string>
-#include <algorithm>
 #include <cctype>
-#include <map>
 #include <vector>
 #include <tuple>
 #include <memory>
-#include <stack>
-#include <array>
 #include <set>
-#include <list>
 #include <deque>
 
 enum class TokenType {
