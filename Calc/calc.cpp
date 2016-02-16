@@ -7,177 +7,104 @@
 #include <set>
 #include <deque>
 
-enum class TokenType {
-    None,
-    Operator,
-    Number
-};
+#include "tokenise.h"
 
-using Token = std::tuple<std::string, TokenType>;
-
-constexpr bool isMultiplication(const char character) {
-    return character == '*';
-}
-
-constexpr bool isAddition(const char character) {
-    return character == '+';
-}
-
-constexpr bool isSubtraction(const char character) {
-    return character == '-';
-}
-
-constexpr bool isDivision(const char character) {
-    return character == '/';
-}
-
-constexpr bool isOperator(char character) {
-    return isMultiplication(character)
-        || isAddition(character)
-        || isSubtraction(character)
-        || isDivision(character);
-}
-
-auto tokenise(std::string data) {
-    data += '\x03';
-
-    std::vector<Token> tokens;
-
-    TokenType currentTokenType = TokenType::None;
-    std::string currentLexeme;
-
-    for(auto iter = data.cbegin(); iter != data.cend();) {
-        switch(currentTokenType) {
-        case TokenType::None:
-            if(std::isdigit(*iter)) {
-                currentTokenType = TokenType::Number;
-                continue;
-            } else if(isOperator(*iter)) {
-                currentTokenType = TokenType::Operator;
-                continue;
-            }
-            break;
-        case TokenType::Operator:
-            // TODO: this will accept strings like +*-/ ... it shouldn't
-            if(isOperator(*iter)) {
-                currentLexeme += *iter;
-            } else {
-                tokens.push_back(decltype(tokens)::value_type(currentLexeme, currentTokenType));
-                currentLexeme = "";
-                currentTokenType = TokenType::None;
-                continue;
-            }
-            break;
-        case TokenType::Number:
-            if(std::isdigit(*iter)) {
-                currentLexeme += *iter;
-            } else {
-                tokens.push_back(decltype(tokens)::value_type(currentLexeme, currentTokenType));
-                currentLexeme = "";
-                currentTokenType = TokenType::None;
-                continue;
-            }
-            break;
-        }
-
-        ++iter;
-    }
-
-    return tokens;
-}
-
-struct Expression {
-    virtual ~Expression() = default;       
-};
-
-struct BinaryOperation : public Expression {
-    std::unique_ptr<Expression> lhs, rhs;
-    std::string operation;
-};
-
-struct Number : public Expression {
-    Number(std::string lexeme_)
-        : lexeme(lexeme_) {
-    
-    }
-
-    std::string lexeme;
-};
-
-std::unique_ptr<Expression> parse(const std::vector<Token>& tokens) {
-    std::vector<std::string> binaryOperations;
-    std::deque<std::unique_ptr<Expression>> expressions;
-
-    for(const auto token : tokens) {
-        switch(std::get<TokenType>(token)) {
-        case TokenType::Operator:
-            // TODO: check for unary operations
-            binaryOperations.push_back(std::get<std::string>(token));
-            break;
-        case TokenType::Number:
-            expressions.push_back(std::make_unique<Number>(std::get<std::string>(token)));
-            break;
-        }
-    }
-
-    const std::set<std::string> operatorsInOrderOfPrecendence[] {
-        { std::string("*"), std::string("/") },
-        { std::string("+"), std::string("-") }
+namespace calc {
+    struct Expression {
+        virtual ~Expression() = default;       
     };
 
-    for(const auto operatorSet : operatorsInOrderOfPrecendence) {
-        for(auto iter = binaryOperations.begin(); iter != binaryOperations.end();) {
-            if(operatorSet.find(*iter) != operatorSet.cend()) {
-                auto binaryOperation = std::make_unique<BinaryOperation>();
-                const auto index = std::distance(binaryOperations.begin(), iter);
+    struct BinaryOperation : public Expression {
+        std::unique_ptr<Expression> lhs, rhs;
+        std::string operation;
+    };
 
-                // TODO: check there are expressions left to take!
-                binaryOperation->lhs = std::move(expressions[index]);
-                expressions.erase(expressions.begin() + index);
-            
-                binaryOperation->rhs = std::move(expressions[index]);
-                expressions.erase(expressions.begin() + index);
+    struct Number : public Expression {
+        Number(std::string lexeme_)
+            : lexeme(lexeme_) {
+    
+        }
 
-                binaryOperation->operation = *iter;
+        std::string lexeme;
+    };
 
-                expressions.insert(expressions.begin() + index, std::move(binaryOperation));
+    std::unique_ptr<Expression> parse(const std::vector<Token>& tokens) {
+        std::vector<std::string> binaryOperations;
+        std::deque<std::unique_ptr<Expression>> expressions;
 
-                iter = binaryOperations.erase(iter);
-            } else {
-                ++iter;
+        for(const auto token : tokens) {
+            switch(std::get<TokenType>(token)) {
+            case TokenType::Operator:
+                // TODO: check for unary operations
+                binaryOperations.push_back(std::get<std::string>(token));
+                break;
+            case TokenType::Number:
+                expressions.push_back(std::make_unique<Number>(std::get<std::string>(token)));
+                break;
             }
         }
+
+        const std::set<std::string> operatorsInOrderOfPrecendence[] {
+            { std::string("*"), std::string("/") },
+            { std::string("+"), std::string("-") }
+        };
+
+        for(const auto operatorSet : operatorsInOrderOfPrecendence) {
+            for(auto iter = binaryOperations.begin(); iter != binaryOperations.end();) {
+                if(operatorSet.find(*iter) != operatorSet.cend()) {
+                    auto binaryOperation = std::make_unique<BinaryOperation>();
+                    const auto index = std::distance(binaryOperations.begin(), iter);
+
+                    // TODO: check there are expressions left to take!
+                    binaryOperation->lhs = std::move(expressions[index]);
+                    expressions.erase(expressions.begin() + index);
+            
+                    binaryOperation->rhs = std::move(expressions[index]);
+                    expressions.erase(expressions.begin() + index);
+
+                    binaryOperation->operation = *iter;
+
+                    expressions.insert(expressions.begin() + index, std::move(binaryOperation));
+
+                    iter = binaryOperations.erase(iter);
+                } else {
+                    ++iter;
+                }
+            }
+        }
+
+        if(expressions.size() != 1) {
+            throw; // errrorororor
+        }
+
+        return std::move(expressions.front());
     }
 
-    if(expressions.size() != 1) {
-        throw; // errrorororor
+    double evaluate(const Expression&);
+
+    double evaluateBinaryOperation(const Expression& lhs, const std::string& operation, const Expression& rhs) {
+             if(operation == "*") return evaluate(lhs) * evaluate(rhs);
+        else if(operation == "+") return evaluate(lhs) + evaluate(rhs);
+        else if(operation == "-") return evaluate(lhs) - evaluate(rhs);
+        else if(operation == "/") return evaluate(lhs) / evaluate(rhs);
+        else throw; // errorororororo
     }
 
-    return std::move(expressions.front());
-}
-
-double evaluate(const Expression&);
-
-double evaluateBinaryOperation(const Expression& lhs, const std::string& operation, const Expression& rhs) {
-         if(operation == "*") return evaluate(lhs) * evaluate(rhs);
-    else if(operation == "+") return evaluate(lhs) + evaluate(rhs);
-    else if(operation == "-") return evaluate(lhs) - evaluate(rhs);
-    else if(operation == "/") return evaluate(lhs) / evaluate(rhs);
-    else throw; // errorororororo
-}
-
-double evaluate(const Expression& expression) {
-    if(auto* binaryOperation = dynamic_cast<const BinaryOperation*>(&expression)) {
-        return evaluateBinaryOperation(*binaryOperation->lhs, binaryOperation->operation, *binaryOperation->rhs.get());
-    } else if(auto numericExpression = dynamic_cast<const Number*>(&expression)) {
-        // TODO: add decimal value support
-        return atoi(numericExpression->lexeme.c_str());
-    } else {
-        throw; // errrororor
+    double evaluate(const Expression& expression) {
+        if(auto* binaryOperation = dynamic_cast<const BinaryOperation*>(&expression)) {
+            return evaluateBinaryOperation(*binaryOperation->lhs, binaryOperation->operation, *binaryOperation->rhs.get());
+        } else if(auto numericExpression = dynamic_cast<const Number*>(&expression)) {
+            // TODO: add decimal value support
+            return atoi(numericExpression->lexeme.c_str());
+        } else {
+            throw; // errrororor
+        }
     }
 }
 
 int main() {
+    using namespace calc;
+
     std::cout << evaluate(*parse(tokenise("1 / 3"))) << std::endl;
     std::cin.get();
 }
