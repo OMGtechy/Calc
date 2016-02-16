@@ -156,10 +156,10 @@ std::unique_ptr<Expression> parse(const std::vector<Token>& tokens) {
     return std::move(expressions.front());
 }
 
-double evaluate(Expression*);
+double evaluate(const Expression&);
 
 // TODO: const correctness + should these be references?
-double evaluateBinaryOperation(Expression* lhs, std::string operation, Expression* rhs) {
+double evaluateBinaryOperation(const Expression& lhs, const std::string& operation, const Expression& rhs) {
          if(operation == "*") return evaluate(lhs) * evaluate(rhs);
     else if(operation == "+") return evaluate(lhs) + evaluate(rhs);
     else if(operation == "-") return evaluate(lhs) - evaluate(rhs);
@@ -167,11 +167,10 @@ double evaluateBinaryOperation(Expression* lhs, std::string operation, Expressio
     else throw; // errorororororo
 }
 
-// TODO: should this be a reference or * const?
-double evaluate(Expression* expression) {
-    if(auto* binaryOperation = dynamic_cast<BinaryOperation*>(expression)) {
-        return evaluateBinaryOperation(binaryOperation->lhs.get(), binaryOperation->operation, binaryOperation->rhs.get());
-    } else if(auto numericExpression = dynamic_cast<Number*>(expression)) {
+double evaluate(const Expression& expression) {
+    if(auto* binaryOperation = dynamic_cast<const BinaryOperation*>(&expression)) {
+        return evaluateBinaryOperation(*binaryOperation->lhs, binaryOperation->operation, *binaryOperation->rhs.get());
+    } else if(auto numericExpression = dynamic_cast<const Number*>(&expression)) {
         // TODO: add decimal value support
         return atoi(numericExpression->lexeme.c_str());
     } else {
@@ -180,6 +179,6 @@ double evaluate(Expression* expression) {
 }
 
 int main() {
-    std::cout << evaluate(parse(tokenise("1 / 3")).get()) << std::endl;
+    std::cout << evaluate(*parse(tokenise("1 / 3"))) << std::endl;
     std::cin.get();
 }
