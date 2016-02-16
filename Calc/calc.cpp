@@ -158,7 +158,6 @@ std::unique_ptr<Expression> parse(const std::vector<Token>& tokens) {
 
 double evaluate(const Expression&);
 
-// TODO: const correctness + should these be references?
 double evaluateBinaryOperation(const Expression& lhs, const std::string& operation, const Expression& rhs) {
          if(operation == "*") return evaluate(lhs) * evaluate(rhs);
     else if(operation == "+") return evaluate(lhs) + evaluate(rhs);
