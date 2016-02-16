@@ -125,7 +125,6 @@ std::unique_ptr<Expression> parse(const std::vector<Token>& tokens) {
         { std::string("+"), std::string("-") }
     };
 
-    // TODO: add support for multiple operations at the same precedence
     for(const auto operatorSet : operatorsInOrderOfPrecendence) {
         for(auto iter = binaryOperations.begin(); iter != binaryOperations.end();) {
             if(operatorSet.find(*iter) != operatorSet.cend()) {
