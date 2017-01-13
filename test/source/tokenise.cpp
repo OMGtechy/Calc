@@ -15,21 +15,13 @@
     along with Calc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "stdafx.h"
-#include "CppUnitTest.h"
-
 #include "tokenise.h"
-
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
-
-namespace Microsoft { namespace VisualStudio { namespace CppUnitTestFramework {
-    template<> inline std::wstring ToString<calc::TokenType> (const calc::TokenType& t) { RETURN_WIDE_STRING("<token-type>"); }
-}}}
 
 namespace CalcTest {
     using calc::tokenise;
     using calc::TokenType;
 
+    /*
 	TEST_CLASS(TokeniseTest) {
 	public:
 		TEST_METHOD(TokeniseEmptyString) {
@@ -176,4 +168,5 @@ namespace CalcTest {
             Assert::Fail(L"Not implemented!");
         }
 	};
+    */
 }
