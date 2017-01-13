@@ -58,6 +58,8 @@ namespace calc {
             case TokenType::Number:
                 expressions.push_back(std::make_unique<Number>(std::get<std::string>(token)));
                 break;
+            case TokenType::None:
+                throw; // error!
             }
         }
 
