@@ -14,11 +14,6 @@ INCLUDE_DIRECTORIES(
 )
 
 IF(NOT WIN32)
-    TARGET_LINK_LIBRARIES(
-        Calc
-        pthread
-    ) 
-
     IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
         TARGET_LINK_LIBRARIES(
 	    Calc
