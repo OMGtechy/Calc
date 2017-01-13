@@ -123,7 +123,5 @@ namespace calc {
 
 int main() {
     using namespace calc;
-
     std::cout << evaluate(*parse(tokenise("1 / 3"))) << std::endl;
-    std::cin.get();
 }
