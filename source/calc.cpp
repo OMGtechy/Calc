@@ -121,7 +121,13 @@ namespace calc {
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     using namespace calc;
-    std::cout << evaluate(*parse(tokenise("1 / 3"))) << std::endl;
+
+    if(argc != 2) {
+        std::cout << "Please provide one expression (in quotes) to calculate the result of." << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::cout << evaluate(*parse(tokenise(argv[1]))) << std::endl;
 }
